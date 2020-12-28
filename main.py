@@ -219,7 +219,7 @@ def game(highscore):
 			game_over_screen(b,score,highscore,newhighscore)
 			return
 
-		grid(7)
+		grid(size)
 
 		pygame.display.set_caption(f'Score : {b.get_score()}')
 		pygame.display.update()
