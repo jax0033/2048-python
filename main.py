@@ -7,14 +7,11 @@ os.environ["SDL_VIDEO_WINDOW_POS"] = "600,300"
 
 pygame.init()
 
-screen = pygame.display.set_mode((440,440))
 
-
-global width,height, highscore
-width,height = 440,440
-
-
-
+global width,height,size,highscore
+size = 7
+width,height = 110*size,110*size
+screen = pygame.display.set_mode((110*size,110*size))
 def load_score():
 	try:
 		with open("score.sf","r") as score:
@@ -23,6 +20,7 @@ def load_score():
 		with open("score.sf","w+") as score:
 			score.write("0")
 			return 0
+
 
 def save_score(curscore):
 	with open("score.sf","w+") as score:
@@ -35,44 +33,51 @@ def grid(m=4):
 		pygame.draw.line(screen,(32,34,29),((width//m)*n,0),(((width//m)*n,height)),4)
 	pygame.draw.rect(screen,(32,34,29),pygame.Rect(-1,-1,width+1,height+1),6)
 
+
 class Board:
 	def __init__(self):
 		self.game_over = False
-		self.board = [[0 for i in range(4)]for i in range(4)]
+		self.board = [[0 for i in range(size)]for i in range(size)]
 		self.start = [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,4,4,4,4,4,4,4,4,4,4,8]
 		self.swap_hor = False
 		self.swap_ver = False
-		self.control
 		self.right,self.down,self.up,self.left = True,True,True,True
 		self.last = None
 
 		for n in range(2):
 			self.board[random.randint(0,3)][random.randint(0,3)] = random.choice(self.start)
 
+
 	def add_block(self):
 		temp = False
-		x,y = random.randint(0,3),random.randint(0,3)
+		x,y = random.randint(0,len(self.board)-1),random.randint(0,len(self.board)-1)
+
 		for n in self.board:
 			for m in n:
 				if m == 0:
 					temp = True
+
 		if temp:
 			while self.board[y][x] != 0:
-				x,y = random.randint(0,3),random.randint(0,3)
+				x,y = random.randint(0,len(self.board)-1),random.randint(0,len(self.board)-1)
+
 			self.board[y][x] = random.choice(self.start)
 			self.last = (x,y)
 
+
 	def draw(self):
 		try:
-			pygame.draw.rect(screen,(66,85,66),pygame.Rect(self.last[0]*width//4,self.last[1]*height//4,110,110))
+			pygame.draw.rect(screen,(66,85,66),pygame.Rect(self.last[0]*width//size,self.last[1]*height//size,110,110))
 		except: pass
+
 		for y in range(len(self.board)):
 			for x in range(len(self.board[0])):
 				if self.board[y][x] != 0:
 					font = pygame.font.SysFont(None, 30)
 					text = font.render(f"{self.board[y][x]}", True, (224,139,79))
-					text_rec = text.get_rect(center=((x+1)*width//4-(width//4)//2,(y+1)*height//4-(height//4)//2 ))
+					text_rec = text.get_rect(center=((x+1)*width//size-(width//size)//2,(y+1)*height//size-(height//size)//2 ))
 					screen.blit(text, text_rec)
+
 
 	def move(self,dir_):
 		"""
@@ -81,6 +86,7 @@ class Board:
 		That would make the out of moves game over not possible. 
 		"""
 		self.control_board = str(self.board)
+
 		if dir_ == "right":
 			k,l = 0,1
 			self.right = True
@@ -104,16 +110,19 @@ class Board:
 		for n in range(3):
 			for y in range(len(self.board)):
 				for x in range(len(self.board[0])):
-					x = 3-x
+					x = (size-1)-x
+
 					if self.board[y][x] != 0:
 						try:
 							if self.board[y+k][x+l] == 0:
 								self.board[y+k][x+l],self.board[y][x] = self.board[y][x],0
 						except: continue
+
 					try:
 						if self.board[y][x] == self.board[y+k][x+l]:
 							self.board[y+k][x+l] *= 2
 							self.board[y][x] = 0
+
 					except: continue
 
 		if self.swap_hor:
@@ -129,6 +138,7 @@ class Board:
 		else: self.right,self.down,self.up,self.left = True,True,True,True
 
 		self.add_block()
+
 
 	def get_score(self):
 		self.totalscore = 0
@@ -154,17 +164,20 @@ class Board:
 		if [self.left,self.right,self.up,self.down] == [False,False,False,False]:
 			self.game_over = True
 
+
 	def swap(self,dir_):
 		self.temp = []
 		if dir_ == "ver":
 			for n in range(len(self.board)):
 				self.temp.append(self.board[-1-n])
 			self.board = self.temp
+
 		if dir_ == "hor":
 			for n in range(len(self.board[0])):
 				self.copy = self.board[n]
 				self.copy.reverse()
 				self.temp.append(self.copy)
+
 
 	def log(self):
 		for b in self.board:
@@ -194,7 +207,9 @@ def game(highscore):
 				if event.key == pygame.K_d:
 					game_over_screen(b,200,2000,True)
 					return
+
 		b.draw()
+
 		if b.game_over:
 			score = b.get_score()
 			if score > highscore:
@@ -203,9 +218,10 @@ def game(highscore):
 				save_score(score)
 			game_over_screen(b,score,highscore,newhighscore)
 			return
-		grid(4)
 
+		grid(7)
 
+		pygame.display.set_caption(f'Score : {b.get_score()}')
 		pygame.display.update()
 
 def rainbow(color,state):
@@ -227,8 +243,6 @@ def rainbow(color,state):
 	if state == 6:
 		return [color[0],color[1],color[2]-5]
 
-
-
 def draw_text(text,pos,size = 50,center = True, color = (29,49,120)):
 	
 	font = pygame.font.SysFont(None, size)
@@ -240,12 +254,14 @@ def draw_text(text,pos,size = 50,center = True, color = (29,49,120)):
 		else:
 			screen.blit(text,pos)
 	except: pass
+
 def game_over_screen(board,score,highscore,newhighscore):
 	newhighscore = newhighscore
 	highscore = highscore
 	score = score
 	s = pygame.Surface((width//2,height))
 	b = board
+	b.last = None
 	co = 0
 	cou = 0
 	coun = 0
@@ -270,9 +286,9 @@ def game_over_screen(board,score,highscore,newhighscore):
 
 		mx,my = pygame.mouse.get_pos()
 		b.draw()
-		grid(4)
+		grid(size)
 		if new_game.collidepoint((mx,my)): 
-			if click:				
+			if click:
 				return
 			if cou <= 20:
 				cou += 0.2
@@ -296,10 +312,6 @@ def game_over_screen(board,score,highscore,newhighscore):
 		s.fill((255,0,0))
 		screen.blit(s,(width//2,0))
 
-
-
-
-		print(color)
 		draw_text(f"New",(width//4,height//2-17))
 		draw_text(f"Game",(width//4,height//2+15))
 		draw_text(f"Exit",(3*width//4,height//2-17))
@@ -316,16 +328,8 @@ def game_over_screen(board,score,highscore,newhighscore):
 			draw_text(f"!!! New Highscore !!!",(width//2,50),60,True,[255-color[0],255-color[1],255-color[2]])
 			draw_text(f"Score : {score}  ",(width//2,95),60,True,color)
 
-
-
-
-
 		pygame.display.update()
 
-
-
-highscore = load_score()
-
 while True:
+	highscore = load_score()
 	game(highscore)
-
